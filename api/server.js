@@ -1,32 +1,44 @@
-const express = require("express")
-const helmet = require("helmet")
-const cors = require("cors")
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
 const session = require("express-session")
 const KnexSessionStore = require("connect-session-knex")(session)
 
-const usersRouter = require("./users/users-router.js")
+const usersRouter = require("./users/users-router.js");
 const authRouter = require("./auth/auth-router.js")
 
-const server = express()
+const server = express();
 
-// const config = {
-//   name: "sessionId",
-//   secret: "Secret safe with me.",
-//   cookie: {
-//     //insert more info here when watching video.
-//   }
-// }
+const config = {
+  name:"sessionId",
+  secret: "keep it secret, keep it safe",
+  cookie:{
+    maxAge: 1000 * 60 * 60,
+    secure:false,
+    httpOnly: true
+  },
+  resave:false,
+  saveUnitialized:false,
 
-// server.use(session(config))
-server.use(helmet())
-server.use(express.json())
-server.use(cors())
+  store: new KnexSessionStore({
+    knex:require("../database/connection.js"),
+    tablename:"sessions",
+    sidfieldname:"sid",
+    createTable:true,
+    clearInterval:1000 * 60 * 60
+  })
+}
 
-server.use("/api/users", usersRouter)
-server.use("/api/auth", authRouter)
+server.use(session(config))
+server.use(helmet());
+server.use(express.json());
+server.use(cors());
+
+server.use("/api/users", usersRouter);
+server.use("/api/auth", authRouter);
 
 server.get("/", (req, res) => {
-  res.json({api: "up"})
-})
+  res.json({ api: "up" });
+});
 
-module.exports = server
+module.exports = server;
